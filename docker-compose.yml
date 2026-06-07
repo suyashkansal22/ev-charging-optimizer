@@ -5,25 +5,25 @@ services:
       POSTGRES_USER: ev
       POSTGRES_PASSWORD: ev
       POSTGRES_DB: ev_charging
-    ports: ["5432:5432"]
-    volumes: ["db_data:/var/lib/postgresql/data"]
+    ports: [ "5432:5432" ]
+    volumes: [ "db_data:/var/lib/postgresql/data" ]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ev"]
+      test: [ "CMD-SHELL", "pg_isready -U ev -d ev_charging" ]
       interval: 5s
       timeout: 3s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports: [ "6379:6379" ]
 
   api:
     build: ./api
     environment:
       DATABASE_URL: postgresql://ev:ev@db:5432/ev_charging
       REDIS_URL: redis://redis:6379/0
-    ports: ["8000:8000"]
-    volumes: ["./api:/app"]          # hot-reload during dev
+    ports: [ "8000:8000" ]
+    volumes: [ "./api:/app" ] # hot-reload during dev
     depends_on:
       db:
         condition: service_healthy
@@ -32,8 +32,8 @@ services:
 
   dashboard:
     build: ./dashboard
-    ports: ["3000:80"]
-    depends_on: [api]
+    ports: [ "3000:80" ]
+    depends_on: [ api ]
 
 volumes:
   db_data:
