@@ -1,0 +1,7 @@
+[
+  {"vehicle_id":"EV-101","vehicle_latitude":30.7280,"vehicle_longitude":76.7920,"current_battery_percent":18,"battery_capacity_kwh":50,"target_battery_percent":80,"vehicle_max_charge_power_kw":50},
+  {"vehicle_id":"EV-102","vehicle_latitude":30.7390,"vehicle_longitude":76.7700,"current_battery_percent":42,"battery_capacity_kwh":40,"target_battery_percent":90,"vehicle_max_charge_power_kw":7},
+  {"vehicle_id":"EV-103","vehicle_latitude":30.7200,"vehicle_longitude":76.7850,"current_battery_percent":9,"battery_capacity_kwh":60,"target_battery_percent":70,"vehicle_max_charge_power_kw":120},
+  {"vehicle_id":"EV-104","vehicle_latitude":30.7450,"vehicle_longitude":76.7800,"current_battery_percent":55,"battery_capacity_kwh":50,"target_battery_percent":100,"vehicle_max_charge_power_kw":50},
+  {"vehicle_id":"EV-105","vehicle_latitude":30.7330,"vehicle_longitude":76.7600,"current_battery_percent":30,"battery_capacity_kwh":45,"target_battery_percent":85,"vehicle_max_charge_power_kw":11}
+]

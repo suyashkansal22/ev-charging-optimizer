@@ -1,0 +1,4 @@
+[
+  {"transformer_id":"TX-A","transformer_capacity_kw":250,"current_transformer_load_kw":180},
+  {"transformer_id":"TX-B","transformer_capacity_kw":160,"current_transformer_load_kw":120}
+]

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.15)
+project(ev_engine LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(pybind11 REQUIRED)
+pybind11_add_module(ev_engine src/optimizer.cpp bindings/bindings.cpp)
+target_include_directories(ev_engine PRIVATE include)

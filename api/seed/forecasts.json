@@ -1,0 +1,5 @@
+[
+  {"station_id":"ST-1","current_price_per_kwh":9.5,"future_price_per_kwh":[9.5,10.2,11.0,12.5,11.8,10.0],"horizon_mins":120},
+  {"station_id":"ST-2","current_price_per_kwh":12.0,"future_price_per_kwh":[12.0,11.5,10.8,10.0,9.6,9.2],"horizon_mins":120},
+  {"station_id":"ST-3","current_price_per_kwh":7.8,"future_price_per_kwh":[7.8,8.4,9.0,9.5,10.1,10.5],"horizon_mins":120}
+]

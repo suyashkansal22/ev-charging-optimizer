@@ -1,0 +1,92 @@
+[
+  {
+    "vehicle_id": "EV-101",
+    "station_id": "ST-1",
+    "travel_distance_to_station": 1.34,
+    "travel_time_to_station": 2.7
+  },
+  {
+    "vehicle_id": "EV-101",
+    "station_id": "ST-2",
+    "travel_distance_to_station": 2.65,
+    "travel_time_to_station": 5.3
+  },
+  {
+    "vehicle_id": "EV-101",
+    "station_id": "ST-3",
+    "travel_distance_to_station": 1.22,
+    "travel_time_to_station": 2.4
+  },
+  {
+    "vehicle_id": "EV-102",
+    "station_id": "ST-1",
+    "travel_distance_to_station": 1.1,
+    "travel_time_to_station": 2.2
+  },
+  {
+    "vehicle_id": "EV-102",
+    "station_id": "ST-2",
+    "travel_distance_to_station": 0.26,
+    "travel_time_to_station": 0.5
+  },
+  {
+    "vehicle_id": "EV-102",
+    "station_id": "ST-3",
+    "travel_distance_to_station": 3.6,
+    "travel_time_to_station": 7.2
+  },
+  {
+    "vehicle_id": "EV-103",
+    "station_id": "ST-1",
+    "travel_distance_to_station": 1.57,
+    "travel_time_to_station": 3.1
+  },
+  {
+    "vehicle_id": "EV-103",
+    "station_id": "ST-2",
+    "travel_distance_to_station": 2.81,
+    "travel_time_to_station": 5.6
+  },
+  {
+    "vehicle_id": "EV-103",
+    "station_id": "ST-3",
+    "travel_distance_to_station": 1.44,
+    "travel_time_to_station": 2.9
+  },
+  {
+    "vehicle_id": "EV-104",
+    "station_id": "ST-1",
+    "travel_distance_to_station": 1.3,
+    "travel_time_to_station": 2.6
+  },
+  {
+    "vehicle_id": "EV-104",
+    "station_id": "ST-2",
+    "travel_distance_to_station": 1.15,
+    "travel_time_to_station": 2.3
+  },
+  {
+    "vehicle_id": "EV-104",
+    "station_id": "ST-3",
+    "travel_distance_to_station": 3.43,
+    "travel_time_to_station": 6.9
+  },
+  {
+    "vehicle_id": "EV-105",
+    "station_id": "ST-1",
+    "travel_distance_to_station": 1.85,
+    "travel_time_to_station": 3.7
+  },
+  {
+    "vehicle_id": "EV-105",
+    "station_id": "ST-2",
+    "travel_distance_to_station": 1.24,
+    "travel_time_to_station": 2.5
+  },
+  {
+    "vehicle_id": "EV-105",
+    "station_id": "ST-3",
+    "travel_distance_to_station": 4.11,
+    "travel_time_to_station": 8.2
+  }
+]

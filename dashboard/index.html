@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>EV Charging — Day 1 Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    body{font-family:system-ui,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
+    header{padding:14px 18px;background:#111c33;display:flex;align-items:center;gap:14px}
+    button{background:#2563eb;color:#fff;border:0;padding:9px 16px;border-radius:7px;cursor:pointer;font-weight:600}
+    #map{height:55vh}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #1e293b}
+    th{color:#93c5fd}
+    .note{padding:6px 18px;color:#94a3b8;font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <strong>EV Smart Charging — Day 1 Skeleton</strong>
+    <button onclick="runOptimizer()">Run Optimizer</button>
+  </header>
+  <div class="note">Placeholder dashboard — Person 5 replaces this with the React app. Proves the full request &rarr; engine &rarr; map loop works today.</div>
+  <div id="map"></div>
+  <table id="tbl"><thead><tr><th>Vehicle</th><th>&rarr; Station</th><th>Time slot</th><th>Est. cost</th></tr></thead><tbody></tbody></table>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const API = "http://localhost:8000";
+    const map = L.map('map').setView([30.733, 76.779], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'&copy; OpenStreetMap'}).addTo(map);
+    let layer = L.layerGroup().addTo(map);
+
+    async function runOptimizer(){
+      const seed = await (await fetch(API+"/seed")).json();
+      const out  = await (await fetch(API+"/optimize",{method:"POST"})).json();
+      layer.clearLayers();
+      const sById = {}; seed.stations.forEach(s=>sById[s.station_id]=s);
+      seed.stations.forEach(s=>L.circleMarker([s.station_latitude,s.station_longitude],
+        {radius:9,color:"#22c55e"}).bindPopup("Station "+s.station_id).addTo(layer));
+      seed.vehicles.forEach(v=>L.circleMarker([v.vehicle_latitude,v.vehicle_longitude],
+        {radius:6,color:"#38bdf8"}).bindPopup(v.vehicle_id+" ("+v.current_battery_percent+"%)").addTo(layer));
+      const body = document.querySelector("#tbl tbody"); body.innerHTML="";
+      out.assignments.forEach(a=>{
+        const v = seed.vehicles.find(x=>x.vehicle_id===a.vehicle_id);
+        const s = sById[a.station_id];
+        if(v&&s) L.polyline([[v.vehicle_latitude,v.vehicle_longitude],
+          [s.station_latitude,s.station_longitude]],{color:"#f59e0b",dashArray:"5"}).addTo(layer);
+        body.innerHTML += `<tr><td>${a.vehicle_id}</td><td>${a.station_id}</td><td>${a.time_slot}</td><td>₹${a.est_cost}</td></tr>`;
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+[
+  {"station_id":"ST-1","station_latitude":30.7333,"station_longitude":76.7794,"transformer_id":"TX-A","number_of_chargers":4,"available_chargers":3,"charger_power_kw":60,"queue_length":1,"estimated_wait_time":8},
+  {"station_id":"ST-2","station_latitude":30.7411,"station_longitude":76.7689,"transformer_id":"TX-A","number_of_chargers":2,"available_chargers":2,"charger_power_kw":150,"queue_length":0,"estimated_wait_time":0},
+  {"station_id":"ST-3","station_latitude":30.7194,"station_longitude":76.8000,"transformer_id":"TX-B","number_of_chargers":6,"available_chargers":1,"charger_power_kw":30,"queue_length":4,"estimated_wait_time":25}
+]
