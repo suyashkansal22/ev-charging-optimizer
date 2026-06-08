@@ -18,7 +18,9 @@ services:
     ports: [ "6379:6379" ]
 
   api:
-    build: ./api
+    build:
+      context: .                 # repo root, so the image can compile sibling engine/
+      dockerfile: api/Dockerfile
     environment:
       DATABASE_URL: postgresql://ev:ev@db:5432/ev_charging
       REDIS_URL: redis://redis:6379/0

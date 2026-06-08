@@ -1,0 +1,12 @@
+# The api image now builds from the repo root; keep the build context small.
+.git
+**/__pycache__
+**/*.pyc
+**/*.pyo
+engine/build
+engine/tests/*.exe
+*.exe
+*.so
+dashboard/node_modules
+dashboard/dist
+**/.DS_Store
