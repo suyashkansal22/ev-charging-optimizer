@@ -1,0 +1,6 @@
+# C++ build artifacts (engine is built out-of-tree via CMake / a one-off g++)
+build/
+*.exe
+*.o
+*.obj
+*.pyd

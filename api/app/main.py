@@ -8,7 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .models import (Vehicle, Station, Transformer, RouteInfo, Forecast,
                      OptimizeResponse)
-from . import engine_stub as engine          # <-- swap to: import ev_engine as engine
+try:
+    import ev_engine as engine               # compiled C++ engine (baked into the Docker image)
+except ImportError:                          # local dev without the build -> naive Python mock
+    from . import engine_stub as engine
 
 app = FastAPI(title="EV Charging Optimizer API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
