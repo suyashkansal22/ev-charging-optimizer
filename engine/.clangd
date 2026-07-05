@@ -1,0 +1,30 @@
+# clangd / VS Code C-C++ IntelliSense configuration for the engine.
+#
+# Why this file exists:
+#   optimizer.cpp does  #include "optimizer.hpp"  but that header lives in
+#   engine/include/, not next to the source. The CMake build already knows this
+#   (target_include_directories(... PRIVATE include) in CMakeLists.txt), but the
+#   editor's language server does not, so without this file it reports:
+#     - 'optimizer.hpp' file not found
+#     - a cascade of "undeclared identifier" errors for Vehicle / Station /
+#       Transformer / RouteInfo / Forecast / Assignment (all defined in that header)
+#     - "Too many errors emitted, stopping now"
+#   This file teaches the editor the same include path the compiler uses.
+#
+# It changes NOTHING about the actual build — it only affects in-editor analysis.
+
+CompileFlags:
+  Add:
+    - -std=c++17
+    # Make #include "optimizer.hpp" resolve. Both forms are listed so the path
+    # works whether clangd resolves relative -I against this .clangd's directory
+    # (engine/) or against each source file's directory (src/, bindings/, tests/,
+    # which are all siblings of include/). A non-existent -I dir is harmless.
+    - -Iinclude
+    - -I../include
+    # Match clang's MSVC emulation to the installed toolset (MSVC 14.44 == cl 19.44)
+    # so it stops mis-parsing the standard library headers (the is_void_v /
+    # _Alnode_traits errors coming from <vector>, <unordered_map>, <type_traits>).
+    - -fms-compatibility-version=19.44
+    # Report all diagnostics instead of bailing out with "too many errors".
+    - -ferror-limit=0

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .models import (Vehicle, Station, Transformer, RouteInfo, Forecast,
                      OptimizeResponse)
+from . import livestate                       # Person 3 — Redis live-state layer
 try:
     import ev_engine as engine               # compiled C++ engine (baked into the Docker image)
 except ImportError:                          # local dev without the build -> naive Python mock
@@ -51,11 +52,28 @@ def optimize():
     routes       = [RouteInfo(**r_)  for r_ in _load("routes.json")]
     forecasts    = [Forecast(**f)    for f in _load("forecasts.json")]
     assignments = engine.solve(vehicles, stations, transformers, routes, forecasts)
-    r.set("latest_assignments", json.dumps(assignments))
+    # STORE step: fold the answer + world into a dashboard-ready snapshot and push it
+    # to Redis (best-effort — a Redis outage won't fail the optimize). See livestate.py.
+    snapshot = livestate.build_live_state(vehicles, stations, transformers,
+                                          routes, forecasts, assignments)
+    livestate.publish(r, assignments, snapshot)
     return {"assignments": assignments}
 
 
 @app.get("/assignments")
 def assignments():
-    cached = r.get("latest_assignments")
+    cached = r.get(livestate.KEY_LATEST_ASSIGNMENTS)
     return {"assignments": json.loads(cached) if cached else []}
+
+
+@app.get("/state/live")
+def state_live():
+    """Dashboard live state: per-station load, per-transformer utilisation, vehicles.
+
+    Returns the snapshot cached by the last /optimize (see contracts/livestate.md),
+    or an empty envelope if none has run yet. Read-only; the dashboard polls this
+    (or, later, subscribes to the Redis `live_updates` channel via a WebSocket).
+    """
+    snapshot = livestate.read_live_state(r)
+    return snapshot if snapshot else {"schema_version": livestate.SCHEMA_VERSION,
+                                      "generated_at": None, "assignments": []}

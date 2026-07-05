@@ -4,3 +4,22 @@ __pycache__/
 build/
 node_modules/
 .env
+settings.json
+
+# IDEs and editors
+.vscode/
+.claude/
+.idea/
+.clangd/
+
+# Frontend build outputs
+dist/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# OS-specific metadata
+.DS_Store
+Thumbs.db

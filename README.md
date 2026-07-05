@@ -19,12 +19,15 @@ Then open:
 
 | Service     | Tech              | Owner     | Day-1 state                                  |
 |-------------|-------------------|-----------|----------------------------------------------|
-| api         | FastAPI           | Person 2  | Live, uses the **mock engine**               |
+| api         | FastAPI           | Person 2  | Live; prefers the **real C++ engine**, falls back to mock |
 | engine      | C++ + pybind11    | Person 1  | Real optimizer — compiled into the api image, used automatically |
 | db          | PostgreSQL        | Person 2  | Running (official image)                     |
-| redis       | Redis             | Person 3  | Running, caches latest assignments           |
+| redis       | Redis             | Person 3  | Live-state layer: caches `live_state` + assignments, pub/sub on optimize |
 | simulator   | SimPy + ML        | Person 4  | Stub data in api/seed/* for now              |
 | dashboard   | static (→ React)  | Person 5  | Minimal Leaflet map placeholder              |
+
+Building on this project? Read **[`INTEGRATION.md`](INTEGRATION.md)** first — it maps every
+seam between components and shows where your work plugs in.
 
 ## The one rule
 
@@ -58,10 +61,11 @@ see [`engine/README.md`](engine/README.md).
 ## Folder map
 
 ```
-contracts/   the shared data contract (single source of truth)
-api/         Person 2 — FastAPI server + seed data + mock engine
-engine/      Person 1 — C++ optimizer + pybind11 binding (your real work)
+contracts/   the shared data contract (schemas.md + livestate.md)
+api/         Person 2 — FastAPI server + seed data + engine (with app/livestate.py, Person 3)
+engine/      Person 1 — C++ optimizer + pybind11 binding (the real optimizer)
+routing/     Person 3 — RouteInfo generator (traffic seam; haversine stand-in for a maps API)
 simulator/   Person 4 — grid sim + price ML (stub for now)
 dashboard/   Person 5 — web map (placeholder for now)
-scripts/     helpers
+scripts/     helpers (smoke_test.sh + cross-platform smoke_test.py)
 ```
