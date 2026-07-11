@@ -31,12 +31,31 @@ body {
   border-radius: 8px;
 }
 
+.custom-map-marker {
+  background: transparent;
+  border: 0;
+}
+
+.assignment-route-flow {
+  animation: assignment-route-flow 900ms linear infinite;
+}
+
+@keyframes assignment-route-flow {
+  from {
+    stroke-dashoffset: 18;
+  }
+
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
 @media (max-width: 760px) {
   aside {
     left: 0.75rem !important;
     right: 0.75rem !important;
     top: 0.75rem !important;
     width: auto !important;
-    max-height: 48vh !important;
+    max-height: 54vh !important;
   }
 }
