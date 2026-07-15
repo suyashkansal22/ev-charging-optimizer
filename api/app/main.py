@@ -50,12 +50,17 @@ def _af(a, field, default=None):
     return a.get(field, default) if isinstance(a, dict) else getattr(a, field, default)
 
 
-def persist_run(vehicles, assignments, source="batch"):
-    """Write the request -> assignment -> billing chain to Postgres.
+def persist_run(vehicles, assignments, source="batch", bill=False):
+    """Write the request -> assignment (-> billing) chain to Postgres.
 
-    Reused by both /optimize (source="batch", the whole fleet) and /requests
-    (source="live", one car). Best-effort: any DB error rolls back and is logged,
-    never raised — so a Postgres outage can't turn a success into a 500.
+    Reused by /optimize (source="batch", bill=False) and /requests (source="live",
+    bill=True). Billing is intentionally NOT written for batch optimises: /optimize is
+    a *re-planning* pass over the same fleet, so billing there would double-charge a
+    driver on every run. A bill represents a real charge commitment, which only happens
+    when a vehicle actually requests one (POST /requests).
+
+    Best-effort: any DB error rolls back and is logged, never raised — so a Postgres
+    outage can't turn a success into a 500.
     """
     target = {v.vehicle_id: v.target_battery_percent for v in vehicles}
     session = db.SessionLocal()
@@ -81,11 +86,12 @@ def persist_run(vehicles, assignments, source="batch"):
             session.add(asg)
             session.flush()                      # assigns asg.id
 
-            session.add(db_models.BillingRecord(
-                assignment_id=asg.id,
-                vehicle_id=vid,
-                amount=float(_af(a, "est_cost", 0.0) or 0.0),
-            ))
+            if bill:                             # only real charge commitments are billed
+                session.add(db_models.BillingRecord(
+                    assignment_id=asg.id,
+                    vehicle_id=vid,
+                    amount=float(_af(a, "est_cost", 0.0) or 0.0),
+                ))
         session.commit()                         # all rows saved together (one transaction)
     except Exception as exc:
         session.rollback()
@@ -124,9 +130,10 @@ def optimize():
     snapshot = livestate.build_live_state(vehicles, stations, transformers,
                                           routes, forecasts, assignments)
     livestate.publish(r, assignments, snapshot)
-    # STORE step (Postgres): permanent request -> assignment -> billing history.
-    # Best-effort, exactly like the Redis write above.
-    persist_run(vehicles, assignments)
+    # STORE step (Postgres): record this re-planning pass as request + assignment
+    # history. No billing here — /optimize re-runs the whole fleet, so billing would
+    # double-charge; a bill is written only on a real POST /requests. Best-effort.
+    persist_run(vehicles, assignments, source="batch", bill=False)
     return {"assignments": assignments}
 
 
@@ -202,15 +209,12 @@ def _haversine_km(lat1, lon1, lat2, lon2):
     return 2 * R * math.asin(math.sqrt(a))
 
 
-def _routes_for(vehicle, stations, seed_routes):
-    """RouteInfo for this vehicle to every station. Prefer the seed's precomputed routes;
-    if this car isn't in the seed, synthesize straight-line routes (haversine @ 30 km/h)
-    so a brand-new car can still be placed. Canonical routes come from Person 3's
-    routing/ generator — this is only a self-contained stand-in for unknown vehicles.
+def _routes_for(vehicle, stations):
+    """RouteInfo from this vehicle's CURRENT position to every station, via a straight-line
+    (haversine @ 30 km/h) stand-in for a real maps API. A live request reports where the car
+    IS right now, so we always route from the submitted coordinates — never a stale seed
+    position. (Canonical routes come from Person 3's routing/ generator when integrated.)
     """
-    mine = [r for r in seed_routes if r.vehicle_id == vehicle.vehicle_id]
-    if mine:
-        return mine
     routes = []
     for s in stations:
         dist = _haversine_km(vehicle.vehicle_latitude, vehicle.vehicle_longitude,
@@ -225,20 +229,20 @@ def _routes_for(vehicle, stations, seed_routes):
 @app.post("/requests", response_model=Assignment)
 def submit_request(vehicle: Vehicle):
     """One live vehicle asks to charge. We run the optimizer for just this car against the
-    current grid, persist the request -> assignment -> billing chain (source='live'), and
-    return the car's own assignment: which station, which time slot, estimated cost.
+    current grid — routed from the car's CURRENT position — persist the request ->
+    assignment -> billing chain (source='live', billed), and return the car's own
+    assignment: which station, which time slot, estimated cost.
     """
     stations     = [Station(**s)     for s in _load("stations.json")]
     transformers = [Transformer(**t) for t in _load("transformers.json")]
     forecasts    = [Forecast(**f)    for f in _load("forecasts.json")]
-    seed_routes  = [RouteInfo(**r_)  for r_ in _load("routes.json")]
-    routes = _routes_for(vehicle, stations, seed_routes)
+    routes = _routes_for(vehicle, stations)
 
     assignments = engine.solve([vehicle], stations, transformers, routes, forecasts)
     if not assignments:
         raise HTTPException(status_code=422, detail="no assignment could be produced")
 
-    persist_run([vehicle], assignments, source="live")
+    persist_run([vehicle], assignments, source="live", bill=True)
     return assignments[0]
 
 
@@ -272,40 +276,65 @@ async def ws_live(websocket: WebSocket):
     livestate.py builds the *content*; we just forward what's already in Redis.
     """
     await websocket.accept()
-    ar = aioredis.from_url(REDIS_URL, decode_responses=True)
-    pubsub = ar.pubsub()
-    await pubsub.subscribe(livestate.CHANNEL_UPDATES)
-
-    async def push_updates():
-        # 1) send whatever is current right now, so a freshly-opened dashboard isn't blank
-        current = await ar.get(livestate.KEY_LIVE_STATE)
-        if current:
-            await websocket.send_text(current)
-        # 2) then forward the latest snapshot every time an optimize nudges the channel
-        while True:
-            msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
-            if msg is not None:
-                snapshot = await ar.get(livestate.KEY_LIVE_STATE)
-                if snapshot:
-                    await websocket.send_text(snapshot)
-
-    async def watch_disconnect():
-        # blocks until the browser closes the pipe, so we can tear down cleanly
-        try:
-            while True:
-                await websocket.receive_text()
-        except WebSocketDisconnect:
-            return
-
-    pusher = asyncio.create_task(push_updates())
-    watcher = asyncio.create_task(watch_disconnect())
+    ar = None
+    pubsub = None
     try:
+        # Acquire INSIDE the try so a Redis outage at connect time still hits the finally
+        # cleanup below (subscribe() is the first call that actually reaches Redis).
+        ar = aioredis.from_url(REDIS_URL, decode_responses=True)
+        pubsub = ar.pubsub()
+        await pubsub.subscribe(livestate.CHANNEL_UPDATES)
+
+        async def push_updates():
+            # 1) send whatever is current right now, so a freshly-opened dashboard isn't blank
+            current = await ar.get(livestate.KEY_LIVE_STATE)
+            if current:
+                await websocket.send_text(current)
+            # 2) then forward the latest snapshot every time an optimize nudges the channel
+            while True:
+                msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=5.0)
+                if msg is not None:
+                    snapshot = await ar.get(livestate.KEY_LIVE_STATE)
+                    if snapshot:
+                        await websocket.send_text(snapshot)
+
+        async def watch_disconnect():
+            # blocks until the browser closes the pipe, so we can tear down cleanly
+            try:
+                while True:
+                    await websocket.receive_text()
+            except WebSocketDisconnect:
+                return
+
+        pusher = asyncio.create_task(push_updates())
+        watcher = asyncio.create_task(watch_disconnect())
         # run both; whichever finishes first (a send error or the client leaving) ends it
-        _, pending = await asyncio.wait({pusher, watcher},
-                                        return_when=asyncio.FIRST_COMPLETED)
+        done, pending = await asyncio.wait({pusher, watcher},
+                                           return_when=asyncio.FIRST_COMPLETED)
+        # surface a genuine failure (don't let it vanish as "exception never retrieved")
+        for task in done:
+            exc = task.exception()
+            if exc and not isinstance(exc, WebSocketDisconnect):
+                log.warning("ws/live task ended with error: %s", exc)
+        # cancel the loser and AWAIT it, so it stops using the shared Redis connection
+        # before we close that connection below
         for task in pending:
             task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+    except Exception as exc:
+        # e.g. Redis unreachable at connect — degrade quietly instead of a raw traceback
+        log.warning("ws/live closing (setup/stream error): %s", exc)
     finally:
-        await pubsub.unsubscribe(livestate.CHANNEL_UPDATES)
-        await pubsub.aclose()
-        await ar.aclose()
+        if pubsub is not None:
+            try:
+                await pubsub.aclose()
+            except Exception:
+                pass
+        if ar is not None:
+            try:
+                await ar.aclose()
+            except Exception:
+                pass
