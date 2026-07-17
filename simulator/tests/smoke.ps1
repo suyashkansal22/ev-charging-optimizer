@@ -108,24 +108,29 @@ try {
 
 if ($healthOk) {
     $body = '{"vehicle_id":"SMOKE-001","vehicle_latitude":30.74,"vehicle_longitude":76.78,"current_battery_percent":12,"battery_capacity_kwh":50,"vehicle_max_charge_power_kw":50,"target_battery_percent":80}'
-    try {
-        $resp = Invoke-WebRequest -Uri "$apiBase/requests" -Method POST -ContentType 'application/json' -Body $body -TimeoutSec 5
-        $code = [int]$resp.StatusCode
-        if ($code -ge 200 -and $code -lt 300) {
-            Check-Ok "POST /requests accepted (HTTP $code)"
-        } elseif ($code -ge 400 -and $code -lt 500) {
-            Check-Ok "POST /requests rejected with HTTP $code (expected for out-of-data scenarios)"
-        } else {
-            Check-Fail "POST /requests returned $code"
-        }
-    } catch {
-        $err = $_.Exception.Response
-        $code = if ($err) { [int]$err.StatusCode } else { 0 }
-        if ($code -ge 400 -and $code -lt 500) {
-            Check-Ok "POST /requests rejected with HTTP $code (expected for out-of-data scenarios)"
-        } else {
-            Check-Fail "POST /requests call failed: $_"
-        }
+    # Use Python urllib (consistent with the /health check above) instead of
+    # Invoke-WebRequest, which triggers Windows PowerShell's "Script Execution
+    # Risk" warning because it parses responses as HTML by default.
+    $postOut = & $Python -c @"
+import sys, urllib.request, urllib.error
+url = sys.argv[1] + '/requests'
+body = sys.argv[2].encode()
+req = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'}, method='POST')
+try:
+    r = urllib.request.urlopen(req, timeout=5)
+    print('OK', r.status)
+except urllib.error.HTTPError as e:
+    print('HTTP', e.code)
+except Exception as e:
+    print('ERR', type(e).__name__)
+"@ $apiBase $body 2>&1
+    $postOut = ($postOut -join ' ').Trim()
+    if ($postOut -match '^OK\s+(\d+)') {
+        Check-Ok "POST /requests accepted (HTTP $($Matches[1]))"
+    } elseif ($postOut -match '^HTTP\s+(\d+)') {
+        Check-Ok "POST /requests rejected (HTTP $($Matches[1])) (expected for out-of-data scenarios)"
+    } else {
+        Check-Fail "POST /requests failed: $postOut"
     }
 } else {
     Write-Host "[SKIP] $apiBase not reachable - live API publish skipped (good for CI)"
