@@ -126,8 +126,10 @@ def run_demo(args: argparse.Namespace) -> int:
 def _emit_tick(args: argparse.Namespace, ts_now: datetime) -> None:
     """One grid+forecast snapshot + one batch of vehicles per tick."""
     # Use a fresh seed per tick so the simulation drifts (deterministic within
-    # the tick, but the world is moving).
-    tick_seed = (args.seed or 42) + ts_now.second
+    # the tick, but the world is moving). Use `is None` not `or` — `0 or 42`
+    # would silently replace an explicit --seed 0, which is a real bug.
+    base_seed = args.seed if args.seed is not None else 42
+    tick_seed = base_seed + ts_now.second
     stations, transformers, latched = simulate(
         DEFAULT_STATIONS, DEFAULT_TRANSFORMERS,
         hours=args.hours, rng_seed=tick_seed,

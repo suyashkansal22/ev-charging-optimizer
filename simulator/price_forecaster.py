@@ -270,14 +270,26 @@ def forecast(station_ids: Sequence[str],
 DEFAULT_STATION_IDS = list(DEFAULT_STATIONS_BIAS.keys())
 
 
+def _positive_float(s: str) -> float:
+    """argparse `type=` for any positive numeric flag. Raises a clear error
+    so users see the cause instead of a ZeroDivisionError mid-computation."""
+    try:
+        v = float(s)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"expected a real number, got {s!r}") from exc
+    if v <= 0.0:
+        raise argparse.ArgumentTypeError(f"must be > 0, got {v}")
+    return v
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Train a per-station price forecaster and emit a snapshot.")
     ap.add_argument("--days", type=int, default=DAYS_HISTORY,
                     help=f"days of synthetic history (default {DAYS_HISTORY})")
     ap.add_argument("--horizon-mins", type=int, default=HORIZON_MINS,
                     help=f"forecast horizon (default {HORIZON_MINS})")
-    ap.add_argument("--slot-minutes", type=float, default=SLOT_MINUTES,
-                    help=f"forecast slot length in minutes (default {SLOT_MINUTES})")
+    ap.add_argument("--slot-minutes", type=_positive_float, default=SLOT_MINUTES,
+                    help=f"forecast slot length in minutes, must be > 0 (default {SLOT_MINUTES})")
     ap.add_argument("--seed", type=int, default=RNG_SEED, help="RNG seed (default 42)")
     ap.add_argument("--model-out", metavar="PATH",
                     help="if given, pickle the per-slot GBRT models to PATH")
