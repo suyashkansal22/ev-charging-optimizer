@@ -1,0 +1,7 @@
+# Person 4 — simulator dependencies (Python 3.11+; pinned to current tested versions).
+# These are installed inside `simulator/Dockerfile` and by the local smoke script.
+# The API has its own requirements.txt (Person 2 owns) — we keep them separate so
+# Person 4's stack changes don't perturb the API's runtime.
+simpy==4.1.2
+scikit-learn==1.5.2
+numpy==2.1.3
