@@ -123,28 +123,9 @@ export function UserNavbar({
                 
                 <div className="px-3 py-2 space-y-5 max-h-[60vh] overflow-y-auto">
                   
-                  {/* Preferred Charging Time */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-900 mb-2">Preferred Charging Time</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['Morning', 'Afternoon', 'Evening', 'Night'].map(time => (
-                        <label key={time} className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-900">
-                          <input type="checkbox" defaultChecked className="rounded border-slate-300 text-green-600 focus:ring-green-500 w-3.5 h-3.5 cursor-pointer" />
-                          {time}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Sliders */}
                   <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="font-semibold text-slate-900">Maximum Waiting Time</span>
-                        <span className="font-medium text-green-600">20 mins</span>
-                      </div>
-                      <input type="range" min="0" max="60" defaultValue="20" className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600" />
-                    </div>
+
 
                     <div>
                       <div className="flex justify-between text-xs mb-1">
@@ -155,22 +136,7 @@ export function UserNavbar({
                     </div>
                   </div>
 
-                  {/* Settings Toggles */}
-                  <div className="space-y-3 pt-2 border-t border-slate-100">
-                    {[
-                      { label: "Always choose cheapest option" },
-                      { label: "Prefer Fast Charging" },
-                      { label: "Avoid Peak Hours" }
-                    ].map(setting => (
-                      <label key={setting.label} className="flex items-center justify-between cursor-pointer group">
-                        <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">{setting.label}</span>
-                        <div className="relative inline-flex items-center">
-                          <input type="checkbox" defaultChecked className="sr-only peer" />
-                          <div className="w-8 h-4.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-3.5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-green-500"></div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+
                 </div>
 
                 <div className="mt-2 border-t border-slate-100 pt-2 space-y-0.5">
