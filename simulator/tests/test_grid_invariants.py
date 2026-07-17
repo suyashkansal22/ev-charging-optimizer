@@ -19,7 +19,10 @@ import pytest
 # Make the simulator/ folder importable without an install step.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
-from grid_model import simulate, Grid, DEFAULT_STATIONS, DEFAULT_TRANSFORMERS
+from grid_model import (
+    Grid, StationCfg, TransformerCfg, simulate,
+    DEFAULT_STATIONS, DEFAULT_TRANSFORMERS,
+)
 
 
 def _stress_run(hours: int = 168, plug_rate: float = 5.0):
@@ -117,10 +120,8 @@ def test_different_seed_different_output():
 # ---- Grid construction ------------------------------------------------------
 
 def test_grid_build_runs_keeps_state():
-    grid = Grid.build([__import__("grid_model").StationCfg.from_contract(s)
-                       for s in DEFAULT_STATIONS],
-                      [__import__("grid_model").TransformerCfg.from_contract(t)
-                       for t in DEFAULT_TRANSFORMERS],
+    grid = Grid.build([StationCfg.from_contract(s) for s in DEFAULT_STATIONS],
+                      [TransformerCfg.from_contract(t) for t in DEFAULT_TRANSFORMERS],
                       rng_seed=11)
     assert len(grid.stations) == 3
     assert len(grid.transformers) == 2

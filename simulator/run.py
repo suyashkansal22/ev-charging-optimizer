@@ -33,13 +33,12 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
-import random
 import sys
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Allow running as a plain script from the repo root.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
