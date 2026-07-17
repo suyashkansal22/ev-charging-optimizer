@@ -5,6 +5,10 @@ build/
 node_modules/
 .env
 settings.json
+# Simulator (Person 4) — generated artefacts, models, pycache
+simulator/output/
+simulator/__pycache__/
+simulator/**/*.joblib
 
 # IDEs and editors
 .vscode/
