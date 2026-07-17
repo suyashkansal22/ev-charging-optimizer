@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.leaflet-container {
+  background: #dbeafe;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 8px;
+}
+
+.custom-map-marker {
+  background: transparent;
+  border: 0;
+}
+
+.assignment-route-flow {
+  animation: assignment-route-flow 900ms linear infinite;
+}
+
+@keyframes assignment-route-flow {
+  from {
+    stroke-dashoffset: 18;
+  }
+
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@media (max-width: 760px) {
+  aside {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    top: 0.75rem !important;
+    width: auto !important;
+    max-height: 54vh !important;
+  }
+}
